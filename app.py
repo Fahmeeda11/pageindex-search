@@ -12,15 +12,20 @@ from my_query import query_agent, WORKSPACE
 from pageindex import PageIndexClient
 
 from agents import set_tracing_disabled
-
+from werkzeug.utils import secure_filename
+from pathlib import Path
 
 app = Flask(__name__)
 
 # Setup
 set_tracing_disabled(True)
-client = PageIndexClient(workspace=WORKSPACE) 
+client = PageIndexClient(workspace=WORKSPACE)
+uploads_dir = Path(__file__).parent / "docp"
+uploads_dir.mkdir(exist_ok=True) # Create the uploads directory if it doesn't exist
 """creating an instance of the PageIndexClient class by passing the workspace to it 
 which will initialize the client for further operations such as indexing documents and performing queries on them."""
+
+app.config["MAX_CONTENT_LENGTH"] = 50 * 1024 * 1024
 
 #the index route is simple end point for testing purpose only.
 @app.route("/")
@@ -42,6 +47,25 @@ def ask():
         return jsonify({"error": "Missing 'question' or 'doc_id'"}), 400
     query = query_agent(client, doc_id, question, verbose=True)
     return jsonify({"answer": query})
+
+@app.route("/upload", methods=["POST"])
+def upload():
+    if "pdf" not in request.files:
+        return jsonify({"error": "No file part in the request"}), 400
+    file = request.files["pdf"]
+    if file.filename == "":
+        return jsonify({"error": "No selected file"}), 400
+    if not file.filename.lower().endswith(".pdf"):
+        return jsonify({"error": "Only PDF files are allowed"}), 400
+    filename = secure_filename(file.filename)
+    file_path = uploads_dir / filename
+    file.save(str(file_path))
+    try:
+        doc_id = client.index(file_path)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    return jsonify({"doc_id": doc_id, "filename": filename})
+
 
 if __name__=="__main__": app.run(debug=True)
 
