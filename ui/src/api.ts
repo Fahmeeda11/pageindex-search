@@ -13,7 +13,7 @@ export async function askQuestion(docId: string, question: string) {
         method: 'POST',
         headers: 
         { 'Content-Type': 'application/json'},
-        body : JSON.stringify({ docId, question})
+        body : JSON.stringify({ doc_id: docId, question })
     });
     return response.json();
 }
