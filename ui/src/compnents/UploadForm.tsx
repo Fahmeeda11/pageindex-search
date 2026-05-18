@@ -1,5 +1,6 @@
 import { useState} from 'react'
 import { uploadFile} from '../api'
+import { Button, Typography } from 'antd'
 
 // #declaring a component that takes a prop onIndexed 
 //what shape it must pass
@@ -23,8 +24,8 @@ function UploadForm({ onIndexed }: {
             <>
                 <input type="file" accept="application/pdf" onChange={(e) => 
                     setFile(e.target.files?.[0] ?? null)} />
-                    <button onClick={handleUpload}>Upload</button>
-                    <p>{message}</p>
+                    <Button type="primary" onClick={handleUpload}>Upload</Button>
+                    <Typography.Text>{message}</Typography.Text>
             </>
             )
         }
